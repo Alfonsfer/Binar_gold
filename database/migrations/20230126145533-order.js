@@ -23,7 +23,7 @@ module.exports = {
         allowNull: false
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM("Pending","Complete"),
         defaultValue: "Pending"
       },
       created_at: {
