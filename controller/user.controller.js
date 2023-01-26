@@ -7,7 +7,7 @@ const { registerSchema } = require('../validation/schemas/register.schema')
 const validate = require('../middleware/validation')
 const { loginSchema } = require('../validation/schemas/login.schema')
 
-class userController{
+class UserController{
     async register(req,res,next){
         try {
             
@@ -98,3 +98,5 @@ class userController{
         }
     }
 }
+
+module.exports = {UserController}
