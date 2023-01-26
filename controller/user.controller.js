@@ -47,7 +47,7 @@ class userController{
                 username: user.username
             }
             
-            const token = jwt.sign(jwtPayload, process.env.JWT_KEY, {expiresIn:"30d"})
+            const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {expiresIn:"30d"})
 
 
             return new ResponseFormat(res,201,{
@@ -89,7 +89,7 @@ class userController{
                 username: user.username
             }
             
-            const token = jwt.sign(jwtPayload, process.env.JWT_KEY, {expiresIn:"30d"})
+            const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {expiresIn:"30d"})
 
             //login
             return new ResponseFormat(res, 200, {token})
