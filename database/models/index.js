@@ -4,41 +4,46 @@ const Order = require('./orders.model')
 const OrderItem = require('./order-item.model')
 const sequelize = require('./sequelize')
 
+//Relasi User - Item
 User.hasMany(Item, {
-  as: 'item'
-})
-
-User.hasMany(Order, {
-  as: 'order'
-})
-
-Item.belongsTo(User, {
-  as: 'user',
-  foreignKey: 'user_id',
-})
-
-Item.hasMany(OrderItem, {
-  as: 'order-item'
-})
-
-Order.belongsTo(User, {
-  as: 'user',
   foreignKey: 'user_id'
 })
 
-Order.hasMany(OrderItem, {
-  as: 'order-item'
+Item.belongsTo(User, {
+  foreignKey: 'user_id'
 })
 
-OrderItem.belongsTo(Order, {
-  as: 'order',
-  foreignKey: 'order_id'
+// Relasi User - Order
+User.hasMany(Order, {
+  foreignKey: 'user_id'
+})
+
+Order.belongsTo(User, {
+  foreignKey: 'user_id'
+})
+
+//Relasi Item - OrderItem
+Item.hasMany(OrderItem, {
+  foreignKey: 'item_id'
 })
 
 OrderItem.belongsTo(Item, {
-  as: 'item',
   foreignKey: 'item_id'
 })
+
+//Relasi Order - OrderItem
+Order.hasMany(OrderItem, {
+  foreignKey: 'order_id'
+})
+
+OrderItem.belongsTo(Order, {
+  foreignKey: 'order_id'
+})
+
+
+Order.belongsToMany(Item,{through:OrderItem})
+Item.belongsToMany(Order,{through:OrderItem})
+
 
 module.exports = {
   User,

@@ -23,7 +23,7 @@ module.exports = {
         allowNull: false
       },
       status: {
-        type: Sequelize.ENUM("Pending","Complete"),
+        type: Sequelize.ENUM("Pending","Ordered","Complete"),
         defaultValue: "Pending"
       },
       created_at: {

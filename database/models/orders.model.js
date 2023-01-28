@@ -21,7 +21,7 @@ Order.init(
         allowNull: false
     },
     status: {
-        type: DataTypes.ENUM("Pending","Complete"),
+        type: DataTypes.ENUM("Pending","Ordered","Complete"),
         defaultValue: "Pending"
     },
   },
