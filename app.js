@@ -1,6 +1,9 @@
 const express = require('express')
 const userRouter = require('./routes/user.routes')
 const itemRouter = require('./routes/item.routes')
+const orderRouter = require('./routes/order.routes')
+const authUser = require('./middleware/authentication')
+
 const app = express()
 
 
@@ -8,6 +11,7 @@ app.use(express.json())
 
 app.use('/api/v1/user', userRouter)
 app.use('/api/v1/item', itemRouter)
+app.use('/api/v1/order', authUser, orderRouter)
 
 
 app.use((err, req, res, next) => {
