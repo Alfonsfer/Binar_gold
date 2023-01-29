@@ -79,13 +79,16 @@ class ItemController{
 
     async createItem(req,res,next){
         try {
-            const {user_id, name, price, stock} = req.body
+            const {
+                user:{user_id,username},
+                body:{name, price, stock}
+            } = req
             // const token = await jwt.decode()
 
             await validate(createItemSchema, req.body)
 
             const item = await Item.create({
-                user_id,
+                user_id: user_id,
                 name,
                 price,
                 stock
