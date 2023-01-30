@@ -10,7 +10,7 @@ class ItemController{
     async getItems(req,res,next){
         try {
             const {name, sort, numericFilters} = req.query
-            const queryObject = {}
+            let queryObject = {}
             
             if(name){
                 queryObject.name = {[Op.startsWith]: name}
