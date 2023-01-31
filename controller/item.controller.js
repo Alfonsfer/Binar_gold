@@ -12,55 +12,57 @@ class ItemController{
             const {name, sort, numericFilters} = req.query
             let queryObject = {}
             
-            if(name){
-                queryObject.name = {[Op.startsWith]: name}
-            }
-
-            // if(numericFilters){
-            //     const operatorMap = {
-            //         '>': Op.gt,
-            //         '>=': Op.gte,
-            //         '=': Op.eq,
-            //         '<': Op.lt,
-            //         '<=': Op.lte,
-            //     };
-            //     const regEx = /\b(<|>|>=|=|<|<=)\b/g;
-            //     let filters = numericFilters.replace(
-            //         regEx,
-            //         (match) => `-${operatorMap[match]}-`
-            //         );
-            //     const options = ['price', 'stock'];
-            //     filters = filters.split(',').forEach((item) => {
-            //         const [field, operator, value] = item.split('-');
-            //         if (options.includes(field)) {
-            //             queryObject[field] = { [operator] : Number(value) };
-            //         }
-            //     });
+            // if(name){
+            //     //const temp = name
+            //     queryObject.name = {[Op.startsWith]: `%${name}`}
             // }
+
+            // example ?numericFilters=price>1000,stock<20
+            if(numericFilters){
+                const operatorMap = {
+                    '>': Op.gt,
+                    '>=': Op.gte,
+                    '=': Op.eq,
+                    '<': Op.lt,
+                    '<=': Op.lte,
+                };
+                const regEx = /\b(<|>|>=|=|<|<=)\b/g;
+                numericFilters.split(',').forEach((item) => {
+                    // qty>1
+                    const filter = item.replace(regEx, match => `_${match}_`)
+                    const filterSplit = filter.split('_')
+                    queryObject[filterSplit[0]] = {[operatorMap[filterSplit[1]]]: filterSplit[2]}
+                })
+            }
             
+
+            // example ?sort=price-A,stock-D
             let sortList = []
             if(sort){
-                const field = sort.split(',').forEach((data) => {
-                    sortList.push([data,'DESC'])
+                const map = {
+                    "A": 'ASC',
+                    "D": "DESC"
+                }
+                const filter = sort.split(',').forEach((data) => {
+                    const [field, option] = data.split('-')
+                    sortList.push([field,map[option]])
                 })
-                // sortList =  [[col1,'desc'],[col2,'desc]]
             }else{
                 sortList.push(['created_at','DESC'])
             }
+            
             const page = Number(req.query.page) || 1;
             const limit = Number(req.query.limit) || 10;
             const skip = (page - 1) * limit;
             
             let items = await Item.findAll({
                 where:{
-                    name: queryObject.name,
-                    price: queryObject.price,
-                    stock: queryObject.stock
+                    ...queryObject
                 },
                 order: sortList,
                 limit: limit,
                 offset: skip,
-                //attributes: [id, name, price, stock],
+                attributes: ["id", "name", "price", "stock"],
                 include: {
                     model: User,
                     attributes: ['id','username','email']
@@ -71,7 +73,7 @@ class ItemController{
                 throw new ErrorResponse(404,"No Items Found")
             }
 
-            return new ResponseFormat(res,200,item)
+            return new ResponseFormat(res,200,items)
         } catch (error) {
             next(error)
         }
@@ -79,16 +81,20 @@ class ItemController{
 
     async createItem(req,res,next){
         try {
-            const {
-                user:{user_id,username},
-                body:{name, price, stock}
-            } = req
+            // const {
+            //     user:{user_id},
+            //     body:{name, price, stock}
+            // } = req
+
+            const {user_id} =req.body.user
+            const {name, price, stock} = req.body.data
             // const token = await jwt.decode()
 
-            await validate(createItemSchema, req.body)
+            // await validate(createItemSchema, req.body)
+            await validate(createItemSchema, req.body.data)
 
             const item = await Item.create({
-                user_id: user_id,
+                user_id,
                 name,
                 price,
                 stock
@@ -124,11 +130,18 @@ class ItemController{
 
     async updateItem(req,res,next){
         try {
+            // const {
+            //     user:{user_id},
+            //     params:{id:item_id}
+            // } = req
+
+            const {user_id} = req.body.user
             const {id: item_id} = req.params
 
-            const item = await Item.update(req.body,{
+            const item = await Item.update(...req.body,{
                 where:{
-                    id: item_id
+                    id: item_id,
+                    user_id
                 }
             })
 
@@ -145,11 +158,17 @@ class ItemController{
 
     async deleteItem(req,res,next){
         try {
+            // const {
+            //     user:{user_id},
+            //     params:{id:item_id}
+            // } = req
+            const {user_id} = req.body.user
             const {id:item_id} = req.params
             
             const item = await Item.destroy({
                 where: {
-                    id: item_id
+                    id: item_id,
+                    user_id
                 }
             })
 

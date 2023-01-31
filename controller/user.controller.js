@@ -44,7 +44,6 @@ class UserController{
             //generate token
             const jwtPayload = {
                 user_id : user.id,
-                username: user.username
             }
             
             const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {expiresIn:"30d"})
@@ -86,7 +85,6 @@ class UserController{
             //token
             const jwtPayload = {
                 user_id : user.id,
-                username: user.username
             }
             
             const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {expiresIn:"30d"})
