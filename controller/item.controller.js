@@ -12,10 +12,9 @@ class ItemController{
             const {name, sort, numericFilters} = req.query
             let queryObject = {}
             
-            // if(name){
-            //     //const temp = name
-            //     queryObject.name = {[Op.startsWith]: `%${name}`}
-            // }
+            if(name){
+                queryObject.name = {[Op.like]: `%${name}%`}
+            }
 
             // example ?numericFilters=price>1000,stock<20
             if(numericFilters){
@@ -48,7 +47,7 @@ class ItemController{
                     sortList.push([field,map[option]])
                 })
             }else{
-                sortList.push(['created_at','DESC'])
+                sortList.push(['created_at','ASC'])
             }
             
             const page = Number(req.query.page) || 1;
@@ -81,17 +80,12 @@ class ItemController{
 
     async createItem(req,res,next){
         try {
-            // const {
-            //     user:{user_id},
-            //     body:{name, price, stock}
-            // } = req
-
-            const {user_id} =req.body.user
-            const {name, price, stock} = req.body.data
-            // const token = await jwt.decode()
-
-            // await validate(createItemSchema, req.body)
-            await validate(createItemSchema, req.body.data)
+            const {
+                user:{user_id},
+                body:{name, price, stock}
+            } = req
+            
+            await validate(createItemSchema, req.body)
 
             const item = await Item.create({
                 user_id,
@@ -130,25 +124,39 @@ class ItemController{
 
     async updateItem(req,res,next){
         try {
-            // const {
-            //     user:{user_id},
-            //     params:{id:item_id}
-            // } = req
+            const {
+                user:{user_id},
+                params:{id:item_id},
+                body:{price,stock}
+            } = req
 
-            const {user_id} = req.body.user
-            const {id: item_id} = req.params
+            const updatedAttr = {price:price, stock:stock} 
 
-            const item = await Item.update(...req.body,{
+            let item = await Item.findOne({
                 where:{
                     id: item_id,
                     user_id
                 }
             })
-
+            
             if(!item){
                 throw new ErrorResponse(404,'Item Not Found')
             }
-
+            
+            await Item.update({...updatedAttr},{
+                where:{
+                    id: item_id,
+                    user_id
+                }
+            })
+            
+            // item = await Item.findOne({
+            //     where:{
+            //         id: item_id,
+            //         user_id
+            //     }
+            // })
+            
             return new ResponseFormat(res, 200, item)
 
         } catch (error) {
@@ -158,12 +166,10 @@ class ItemController{
 
     async deleteItem(req,res,next){
         try {
-            // const {
-            //     user:{user_id},
-            //     params:{id:item_id}
-            // } = req
-            const {user_id} = req.body.user
-            const {id:item_id} = req.params
+            const {
+                user:{user_id},
+                params:{id:item_id}
+            } = req
             
             const item = await Item.destroy({
                 where: {
