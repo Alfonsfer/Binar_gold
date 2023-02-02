@@ -31,7 +31,7 @@ class OrderController{
         }
 
         this.DOIT = function(order,args){
-            return this.updateStock(order,args)
+            return this.updateStock(order,args).bind(this)
         }
         
     }
@@ -78,6 +78,22 @@ class OrderController{
 
     }
 
+
+    /** create order json example
+     * {
+        "data":[{
+            "order_id":0,
+            "item_id":2,
+            "qty":5,
+            "price":8000
+        },{
+            "order_id":0,
+            "item_id":7,
+            "qty":3,
+            "price":23000
+        }]
+        }
+      */
     async createOrder(req,res,next){
         try {
             const { user:{user_id} } = req
@@ -253,7 +269,6 @@ class OrderController{
                     })
                 }
             }
-
             const orderUpdate = await Order.update({status:'Cancelled'},{
                 where:{
                     id:order_id,
