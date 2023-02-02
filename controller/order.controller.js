@@ -1,3 +1,4 @@
+const { QueryTypes } = require('sequelize')
 const {OrderItem, Order, Item} = require('../database/models')
 const ErrorResponse = require('../helpers/error.helper')
 const ResponseFormat = require('../helpers/response.helper')
@@ -5,16 +6,50 @@ const { validate } = require('../validation/schemas/createItem.schema')
 //const CreateOrderSchema = require('../validation/schemas/createOrder.schema')
 
 class OrderController{
+    constructor(){
+        this.updateStock = async(order, args)=>{
+            console.log(order);
+            let stocks = []
+            let item_ids = []
+            const orderItem = order.OrderItems
+            orderItem.forEach(data => {
+                if(args){
+                    stocks.push(data.Item.stock + data.qty)
+                }else{
+                    stocks.push(data.Item.stock - data.qty)
+                }
+                item_ids.push(data.item_id)
+            })
+    
+            for(let i = 0; i < stocks.length-1;i++){
+                await Item.update({stock:stocks[i]},{
+                    where:{
+                        id:item_ids[i]
+                    }
+                })
+            }
+        }
+
+        this.DOIT = function(order,args){
+            return this.updateStock(order,args)
+        }
+        
+    }
+    
     async getOrders(req,res,next){
         try {
             const {
                 user:{user_id},
-                query:{status}
+                query:{status,order_id}
             } = req
 
             let queryObject= {user_id:user_id}
             if(status){
                 queryObject.status = status
+            }
+
+            if(order_id){
+                queryObject.order_id = order_id
             }
 
             const order = await Order.findAll({
@@ -60,7 +95,7 @@ class OrderController{
             
             orderItems.forEach(element => {
                 element.order_id = order_id,
-                element.user_id = 
+                element.user_id = user_id
                 total += (element.qty * element.price)
             })
             
@@ -73,7 +108,42 @@ class OrderController{
                 }
             })
 
-            return new ResponseFormat(res,200,order)
+            const getOrder = await Order.findOne({
+                where: {
+                    user_id,
+                    id:order_id
+                },
+                include: {
+                    model: OrderItem,
+                    attributes: ['id','item_id','qty','price'],
+                    include:{
+                        model: Item,
+                        attributes: ['name','stock']
+                    }
+                }
+            })
+
+            if(getOrder){
+                //this.updateStock(getOrder,false)
+                let stocks = []
+                let item_ids = []
+                const orderItem = getOrder.OrderItems
+                orderItem.forEach(data => {
+                    stocks.push(data.Item.stock - data.qty)
+                    item_ids.push(data.item_id)
+                })
+
+                for(let i = 0; i < stocks.length-1;i++){
+                    await Item.update({stock:stocks[i]},{
+                        where:{
+                            id:item_ids[i]
+                        }
+                    })
+                }
+            }
+            
+
+            return new ResponseFormat(res,200,getOrder)
     
         } catch (error) {
             next(error)
@@ -91,20 +161,40 @@ class OrderController{
             let order = await Order.findOne({
                 where: {
                     id:order_id,
-                    user_id
+                    user_id,
+                    status:'Pending'
                 },
-                include: {
+                include: [{
                     model: OrderItem,
                     attributes: ['id','item_id','qty','price'],
-                    include: {
+                    include:{
                         model: Item,
-                        attributes: ['name']
+                        attributes: ['name','stock']
                     }
-                }
+                }]
             })
 
             if(!order){
                 throw new ErrorResponse(404,`Order Not Found`)
+            }
+
+            if(status === 'Cancelled'){
+                // this.updateStock(order,true)
+                let stocks = []
+                let item_ids = []
+                const orderItem = order.OrderItems
+                orderItem.forEach(data => {
+                    stocks.push(data.Item.stock + data.qty)
+                    item_ids.push(data.item_id)
+                })
+
+                for(let i = 0; i < stocks.length-1;i++){
+                    await Item.update({stock:stocks[i]},{
+                        where:{
+                            id:item_ids[i]
+                        }
+                    })
+                }   
             }
 
             await order.update({status},{
@@ -128,7 +218,43 @@ class OrderController{
                 params:{id:order_id},
             } = req
             
-            const order = await Order.update({status:'Cancelled'},{
+            const order = await Order.findOne({
+                where: {
+                    id:order_id,
+                    user_id,
+                    status:'Pending'
+                },
+                include: [{
+                    model: OrderItem,
+                    attributes: ['id','item_id','qty','price'],
+                    include:{
+                        model: Item,
+                        attributes: ['name','stock']
+                    }
+                }]
+            })
+
+            // update stock item
+            if(order){
+                // this.updateStock(order,true)
+                let stocks = []
+                let item_ids = []
+                const orderItem = order.OrderItems
+                orderItem.forEach(data => {
+                    stocks.push(data.Item.stock + data.qty)
+                    item_ids.push(data.item_id)
+                })
+
+                for(let i = 0; i < stocks.length-1;i++){
+                    await Item.update({stock:stocks[i]},{
+                        where:{
+                            id:item_ids[i]
+                        }
+                    })
+                }
+            }
+
+            const orderUpdate = await Order.update({status:'Cancelled'},{
                 where:{
                     id:order_id,
                     user_id
@@ -155,6 +281,7 @@ class OrderController{
         }
         
     }
+
 }
 
 
