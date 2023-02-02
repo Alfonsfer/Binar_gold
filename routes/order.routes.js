@@ -7,7 +7,7 @@ const orderController = new OrderController
 
 router.get('/', authUser, orderController.getOrders)
 
-router.patch('/:id', authUser, orderController.updateOrder)
+router.patch('/:id/update', authUser, orderController.updateOrder)
 
 router.post('/', authUser, orderController.createOrder)
 
