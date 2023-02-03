@@ -2,8 +2,7 @@ const { QueryTypes } = require('sequelize')
 const {OrderItem, Order, Item} = require('../database/models')
 const ErrorResponse = require('../helpers/error.helper')
 const ResponseFormat = require('../helpers/response.helper')
-const { validate } = require('../validation/schemas/createItem.schema')
-//const CreateOrderSchema = require('../validation/schemas/createOrder.schema')
+
 
 class OrderController{
     constructor(){
